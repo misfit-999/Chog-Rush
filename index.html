@@ -79,17 +79,17 @@
 </div>
 
 <!-- Audio -->
-<audio id="audio_bgm1" src="sound/bgm1.mp3"></audio>
-<audio id="audio_bgm2" src="sound/bgm2.mp3"></audio>
-<audio id="audio_bgm3" src="sound/bgm3.mp3"></audio>
-<audio id="audio_bgm4" src="sound/bgm4.mp3"></audio>
-<audio id="audio_bgm5" src="sound/bgm5.mp3"></audio>
+<audio id="audio_bgm1" src="sound/bgm1.mp3" preload="auto"></audio>
+<audio id="audio_bgm2" src="sound/bgm2.mp3" preload="auto"></audio>
+<audio id="audio_bgm3" src="sound/bgm3.mp3" preload="auto"></audio>
+<audio id="audio_bgm4" src="sound/bgm4.mp3" preload="auto"></audio>
+<audio id="audio_bgm5" src="sound/bgm5.mp3" preload="auto"></audio>
 <audio id="audio_start" src="sound/start.mp3" loop></audio>
-<audio id="audio_coin" src="sound/coin.mp3"></audio>
-<audio id="audio_coinx5" src="sound/coinx5.mp3"></audio>
-<audio id="audio_hit" src="sound/hit.mp3"></audio>
-<audio id="audio_life" src="sound/life.mp3"></audio>
-<audio id="audio_gameover" src="sound/gameover.mp3"></audio>
+<audio id="audio_coin" src="sound/coin.mp3" preload="auto"></audio>
+<audio id="audio_coinx5" src="sound/coinx5.mp3" preload="auto"></audio>
+<audio id="audio_hit" src="sound/hit.mp3" preload="auto"></audio>
+<audio id="audio_life" src="sound/life.mp3" preload="auto"></audio>
+<audio id="audio_gameover" src="sound/gameover.mp3" preload="auto"></audio>
 
 <script>
 (() => {
@@ -176,7 +176,24 @@ const audio = {
 let currentBgm = null;
 let currentBgmIndex = -1;
 let muted = false;
-function tryPlay(a) { if (!a || muted) return; a.currentTime = 0; a.play().catch(() => {}); }
+function tryPlay(a) {
+  if (!a || muted) return;
+  try {
+    // For short sound effects that are fired quickly, clone the element
+    // so multiple copies can overlap (coin pickups, hits, life, coinx5).
+    const shortFxIds = ['audio_coin', 'audio_coinx5', 'audio_hit', 'audio_life'];
+    if (a.id && shortFxIds.includes(a.id)) {
+      const clone = a.cloneNode(); // not appended, but playable
+      clone.play().catch(() => {});
+      // Optional: cleanup when finished (not strictly necessary)
+      clone.addEventListener('ended', () => { try { clone.src = ''; } catch(e){} });
+    } else {
+      // For long sounds (bgm/gameover/start) use normal reset and play
+      a.currentTime = 0;
+      a.play().catch(() => {});
+    }
+  } catch (e) { /* swallow playback errors */ }
+}
 function tryStop(a) { if (!a) return; a.pause(); a.currentTime = 0; }
 
 function playRandomBgm() {
@@ -184,22 +201,32 @@ function playRandomBgm() {
   if (currentBgm) {
     currentBgm.pause();
     currentBgm.currentTime = 0;
+    currentBgm.onended = null;
   }
 
-  // Pick a new random index that’s different from the last
-  let newIndex;
-  do {
-    newIndex = Math.floor(Math.random() * audio.bgms.length);
-  } while (newIndex === currentBgmIndex && audio.bgms.length > 1);
+  // Build list of available (loaded) bgm elements
+  const available = audio.bgms.filter(a => a && a.src && a.readyState > 0);
+  if (available.length === 0) {
+    // no loaded bgm available — skip
+    currentBgm = null;
+    currentBgmIndex = -1;
+    return;
+  }
 
-  currentBgmIndex = newIndex;
-  currentBgm = audio.bgms[newIndex];
-  
+  // Pick a new random track from available, avoiding immediate repeat
+  let newTrack;
+  do {
+    newTrack = available[Math.floor(Math.random() * available.length)];
+  } while (newTrack === currentBgm && available.length > 1);
+
+  currentBgm = newTrack;
+  currentBgmIndex = audio.bgms.indexOf(currentBgm);
+
   if (!muted) {
     currentBgm.play().catch(() => {});
   }
 
-  // When it ends, automatically play another random one
+  // When it ends, pick another random available one
   currentBgm.onended = playRandomBgm;
 }
 
@@ -226,6 +253,16 @@ assets.coin.onload = () => {
 };
 
 function updateHUD() {
+  // Make sure the coin icon is always shown if the image is loaded
+  if (assets.coin && assets.coin.complete && assets.coin.naturalWidth) {
+    coinIconImg.style.display = 'block';
+    coinSVG.style.display = 'none';
+  } else {
+    coinIconImg.style.display = 'none';
+    coinSVG.style.display = 'block';
+  }
+
+  // Update coin count and lives
   coinCountEl.textContent = coinCount;
   livesBox.innerHTML = '';
   for (let i = 0; i < lives; i++) {
@@ -431,6 +468,7 @@ Object.assign(muteBtn.style, {
   borderRadius: '8px'
 });
 document.body.appendChild(muteBtn);
+muteBtn.style.display = 'none';
 
 const pauseBtn = document.createElement('button');
 pauseBtn.textContent = '⏸️';
