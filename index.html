@@ -42,14 +42,33 @@
 
 <!-- Start Screen -->
 <div id="startOverlay" class="overlay" style="display:flex;z-index:10">
-  <div class="panel start-bg" role="dialog" aria-modal="true">
-    <img src="assets/start_bg.webp" alt="Chog Rush Start Image" id="startImage">
-    <div class="icon-row">
-      <img src="assets/coin.webp" alt="Coin Icon">
+  <div class="panel start-bg" role="dialog" aria-modal="true" style="padding:14px;">
+    <!-- slightly smaller image so controls fit on short screens -->
+    <img src="assets/start_bg.webp" alt="Chog Rush Start Image" id="startImage" style="max-width:65%; margin-bottom:10px;">
+
+    <div class="icon-row" style="margin-bottom:8px;">
+      <img src="assets/coin.webp" alt="MON Icon">
       <img src="assets/life.webp" alt="Health Icon">
     </div>
-    <p class="small">How to play: use ← → or A / D to move between lanes. On mobile, tap left/right or swipe.</p>
-    <div class="controls">
+
+    <!-- Compact how-to + guide -->
+    <p class="small" style="margin:4px 0 6px 0; text-align:left; font-size:14px;"><strong>How to play</strong>: use ← → or A / D to move lanes. On mobile, tap left/right or swipe.</p>
+
+    <div class="guide" style="max-width:92%; text-align:left; margin:0 auto 8px auto;">
+      <ul style="margin:0; padding-left:18px; color:#334; font-size:13px; line-height:1.25;">
+        <li><strong>MON</strong> = your score (collect as many as you can).</li>
+        <li><strong>Chogs Chest</strong> = rare 5× MON boost.</li>
+        <li>Avoid obstacles, each hit costs a life.</li>
+      </ul>
+    </div>
+
+    <!-- Creator credit moved higher so it's visible before buttons -->
+    <p class="small" style="margin:0 0 8px 0; font-size:13px; opacity:0.9; text-align:center;">
+      Created by <strong>mi$fit</strong>
+    </p>
+
+    <!-- Buttons moved up slightly to avoid being cut off -->
+    <div class="controls" style="margin-top:4px; margin-bottom:6px;">
       <button id="startButton">Start Game</button>
     </div>
   </div>
@@ -509,11 +528,37 @@ pauseMenu.innerHTML = `
 `;
 document.body.appendChild(pauseMenu);
 
-// --- MUTE BUTTON ---
+// --- MUTE BUTTON (improved) ---
 muteBtn.onclick = () => {
   muted = !muted;
+  // update icon
   muteBtn.textContent = muted ? '🔈' : '🔇';
-  document.querySelectorAll('audio').forEach(a => a.muted = muted);
+
+  // apply mute flag to all audio elements
+  document.querySelectorAll('audio').forEach(a => {
+    try { a.muted = muted; } catch(e){}
+  });
+
+  if (muted) {
+    // when muting, pause the current bgm if playing
+    if (currentBgm && !currentBgm.paused) {
+      try { currentBgm.pause(); } catch(e){}
+    }
+  } else {
+    // unmuting: if there is a currentBgm, resume it when appropriate
+    if (currentBgm) {
+      // if the game is running and not paused, resume bgm
+      if (running && !paused) {
+        try { currentBgm.play().catch(() => {}); } catch(e){}
+      }
+      // otherwise leave it paused until the game starts/resumes
+    } else {
+      // If no currentBgm selected but game is running, start shuffle
+      if (running && !paused) {
+        try { playRandomBgm(); } catch(e){}
+      }
+    }
+  }
 };
 
 // --- PAUSE BUTTON ---
@@ -536,8 +581,18 @@ pauseMenu.querySelector('#resumeBtn').onclick = () => {
 pauseMenu.querySelector('#backToStartBtn').onclick = () => {
   paused = false;
   pauseMenu.style.display = 'none';
-  if (currentBgm) currentBgm.pause();
-  toStart(); // ✅ this correctly resets overlays
+
+  // Pause bgm
+  if (currentBgm) {
+    try { currentBgm.pause(); } catch(e){}
+  }
+
+  // Hide the controls so they are not interactive on the Start overlay
+  try { muteBtn.style.display = 'none'; } catch(e){}
+  try { pauseBtn.style.display = 'none'; } catch(e){}
+
+  // Now go to start screen
+  toStart();
 };
 
 // --- Show Pause when game starts ---
