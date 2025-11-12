@@ -10,8 +10,6 @@
 <meta property="og:image" content="https://chogrush.xyz/assets/preview_v2.jpg" />
 <meta property="og:url" content="https://chogrush.xyz" />
 <meta property="og:type" content="website" />
-
-<!-- For better Telegram/WhatsApp/X previews -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Chog Rush 🎮" />
 <meta name="twitter:description" content="Collect MON, dodge obstacles, and chase glory in Chog Rush — made by mi$fit." />
@@ -37,6 +35,43 @@
   .icon-row{display:flex;justify-content:center;gap:20px;margin-bottom:12px}
   .icon-row img{width:40px;height:40px}
   @media(max-width:420px){ h1{font-size:28px} .start-bg img{max-width:90%;}}
+
+  /* ensure overlays are clickable when visible */
+  #startOverlay, #gameOverOverlay { pointer-events: auto; }
+
+  /* NEW: limit gameover image size so buttons stay visible */
+  #goImageWrap img {
+    display:block;
+    margin: 10px auto 8px auto;
+    max-width: 60%;
+    max-height: 36vh;     /* <-- ensures image never grows too tall */
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    object-fit: contain;
+  }
+
+  /* NEW: position touch controls at screen edges */
+  #touchLeft {
+    position: fixed;
+    left: 14px;
+    bottom: 14px;
+    transform: none;
+    z-index: 50;
+  }
+  #touchRight {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    transform: none;
+    z-index: 50;
+  }
+
+  /* ensure submit UI sits above overlay content */
+  #submitWrap { z-index: 9999; position: relative; }
+
+  /* make sure gameOver panel content can scroll on very short screens */
+  #gameOverOverlay .panel { max-height: 85vh; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -46,7 +81,7 @@
 <div class="hud" aria-hidden="true">
   <div class="coinBox" id="coinBox">
     <img id="coinIcon" src="assets/coin.webp" width="28" height="28" style="display:none" alt="coin">
-    <svg id="coinSVG" width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd700" stroke="#b88600" stroke-width="1"/><text x="12" y="16" font-size="10" text-anchor="middle" fill="#072033" font-weight="700">$</text></svg>
+    <svg id="coinSVG" width="28" height="28" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffd700" stroke="#b88600" stroke-width="1"/><text x="12" y="16" font-size="10" text-anchor="middle" fill="#072033" font-weight="700">MON</text></svg>
     <div id="coinCount">0</div>
   </div>
   <div class="livesBox" id="livesBox" style="margin-left:10px"></div>
@@ -54,16 +89,20 @@
 
 <!-- Start Screen -->
 <div id="startOverlay" class="overlay" style="display:flex;z-index:10">
-  <div class="panel start-bg" role="dialog" aria-modal="true" style="padding:14px;">
-    <!-- slightly smaller image so controls fit on short screens -->
-    <img src="assets/start_bg.webp" alt="Chog Rush Start Image" id="startImage" style="max-width:65%; margin-bottom:10px;">
+  <!-- leaderboard box (inside start overlay, top-right) -->
+  <div id="leaderboardBox" style="position:absolute; right:14px; top:14px; width:220px; background:rgba(255,255,255,0.95); padding:8px; border-radius:10px; text-align:left; font-size:13px; z-index:60;">
+    <strong style="display:block;margin-bottom:6px;">Leaderboard</strong>
+    <div id="leaderboardRows">Loading…</div>
+    <div style="font-size:12px; opacity:0.8; margin-top:8px;">Submit to appear</div>
+  </div>
 
+  <div class="panel start-bg" role="dialog" aria-modal="true" style="padding:14px;">
+    <img src="assets/start_bg.webp" alt="Chog Rush Start Image" id="startImage" style="max-width:65%; margin-bottom:10px;">
     <div class="icon-row" style="margin-bottom:8px;">
       <img src="assets/coin.webp" alt="MON Icon">
       <img src="assets/life.webp" alt="Health Icon">
     </div>
 
-    <!-- Compact how-to + guide -->
     <p class="small" style="margin:4px 0 6px 0; text-align:left; font-size:14px;"><strong>How to play</strong>: use ← → or A / D to move lanes. On mobile, tap left/right or swipe.</p>
 
     <div class="guide" style="max-width:92%; text-align:left; margin:0 auto 8px auto;">
@@ -74,12 +113,10 @@
       </ul>
     </div>
 
-    <!-- Creator credit moved higher so it's visible before buttons -->
     <p class="small" style="margin:0 0 8px 0; font-size:13px; opacity:0.9; text-align:center;">
       Created by <strong>mi$fit</strong>
     </p>
 
-    <!-- Buttons moved up slightly to avoid being cut off -->
     <div class="controls" style="margin-top:4px; margin-bottom:6px;">
       <button id="startButton">Start Game</button>
     </div>
@@ -87,26 +124,39 @@
 </div>
 
 <!-- Game Over -->
-<div id="gameOverOverlay" class="overlay" style="display:none;z-index:11">
-  <div class="panel" role="dialog" aria-modal="true">
+<div id="gameOverOverlay" class="overlay" style="display:none;z-index:60;pointer-events:auto;">
+  <div class="panel" role="dialog" aria-modal="true" style="position:relative;overflow:visible;">
     <h1 id="goTitle">Game Over</h1>
+
     <div id="goImageWrap" style="margin:8px 0"></div>
-    <p id="goMessage" class="small"></p>
-    <p id="goMonText" class="small" style="margin-top:-16px;margin-bottom:12px;">
+
+    <p id="goMessage" class="small" style="font-weight:700;font-size:18px;color:#072033;margin:8px 0 6px 0;"></p>
+
+    <p id="goMonText" class="small" style="margin:0 0 12px 0;font-weight:700;">
       MON collected: <strong id="goCoins">0</strong>
     </p>
 
-    <div class="controls" style="margin-top: -10px; margin-bottom: 12px;">
-      <button id="retryButton">Play Again</button>
-      <button id="toStartButton" style="background:#eee;color:#072033">Back to Start</button>
+    <!-- single submit UI inside panel (no duplicates) -->
+    <div id="submitWrap" style="display:none; position:relative; z-index:9999; margin-bottom:10px;">
+      <input id="leaderName" placeholder="Enter a name (2-20 chars)" maxlength="20"
+             style="padding:8px;border-radius:8px;border:1px solid #ddd;width:58%;box-sizing:border-box;" />
+      <button id="submitScoreBtn" style="margin-left:8px;background:#072033;color:#fff;padding:8px 10px;border-radius:8px;border:none;">
+        Submit
+      </button>
+      <div id="submitMsg" style="font-size:13px;color:#333;margin-top:8px;display:inline-block;"></div>
+    </div>
+
+    <div class="controls" style="margin-top:0;margin-bottom:6px;display:flex;gap:8px;justify-content:center;">
+      <button id="retryButton" style="padding:10px 14px">Play Again</button>
+      <button id="toStartButton" style="background:#eee;color:#072033;padding:10px 14px">Back to Start</button>
     </div>
   </div>
 </div>
 
 <!-- Controls -->
-<div class="controlsBottom" aria-hidden="true">
-  <div id="touchLeft" class="touchBtn">◀</div>
-  <div id="touchRight" class="touchBtn">▶</div>
+<div aria-hidden="true">
+  <div id="touchLeft" class="touchBtn" style="position:fixed;left:10px;bottom:14px;">◀</div>
+  <div id="touchRight" class="touchBtn" style="position:fixed;right:10px;bottom:14px;">▶</div>
 </div>
 
 <!-- Audio -->
@@ -149,6 +199,8 @@ const player = { lane: 1, x: 0, y: 0, w: 80, h: 80, targetX: 0, speedLerp: 0.22,
 let entities = [];
 let coinCount = 0;
 let lives = 3;
+let submittedThisRun = false;
+let submitInProgress = false;
 let running = false;
 let gameOver = false;
 let speed = 3;
@@ -210,16 +262,12 @@ let muted = false;
 function tryPlay(a) {
   if (!a || muted) return;
   try {
-    // For short sound effects that are fired quickly, clone the element
-    // so multiple copies can overlap (coin pickups, hits, life, coinx5).
     const shortFxIds = ['audio_coin', 'audio_coinx5', 'audio_hit', 'audio_life'];
     if (a.id && shortFxIds.includes(a.id)) {
-      const clone = a.cloneNode(); // not appended, but playable
+      const clone = a.cloneNode();
       clone.play().catch(() => {});
-      // Optional: cleanup when finished (not strictly necessary)
       clone.addEventListener('ended', () => { try { clone.src = ''; } catch(e){} });
     } else {
-      // For long sounds (bgm/gameover/start) use normal reset and play
       a.currentTime = 0;
       a.play().catch(() => {});
     }
@@ -228,23 +276,19 @@ function tryPlay(a) {
 function tryStop(a) { if (!a) return; a.pause(); a.currentTime = 0; }
 
 function playRandomBgm() {
-  // Stop the current one
   if (currentBgm) {
     currentBgm.pause();
     currentBgm.currentTime = 0;
     currentBgm.onended = null;
   }
 
-  // Build list of available (loaded) bgm elements
   const available = audio.bgms.filter(a => a && a.src && a.readyState > 0);
   if (available.length === 0) {
-    // no loaded bgm available — skip
     currentBgm = null;
     currentBgmIndex = -1;
     return;
   }
 
-  // Pick a new random track from available, avoiding immediate repeat
   let newTrack;
   do {
     newTrack = available[Math.floor(Math.random() * available.length)];
@@ -257,10 +301,8 @@ function playRandomBgm() {
     currentBgm.play().catch(() => {});
   }
 
-  // When it ends, pick another random available one
   currentBgm.onended = playRandomBgm;
 }
-
 
 // DOM elements
 const coinCountEl = document.getElementById('coinCount');
@@ -275,7 +317,7 @@ const goMessage = document.getElementById('goMessage');
 const goCoins = document.getElementById('goCoins');
 const goImageWrap = document.getElementById('goImageWrap');
 
-// Always show the coin icon instead of placeholder once loaded
+// show coin icon when ready
 const coinIconImg = document.getElementById('coinIcon');
 const coinSVG = document.getElementById('coinSVG');
 assets.coin.onload = () => {
@@ -284,7 +326,6 @@ assets.coin.onload = () => {
 };
 
 function updateHUD() {
-  // Make sure the coin icon is always shown if the image is loaded
   if (assets.coin && assets.coin.complete && assets.coin.naturalWidth) {
     coinIconImg.style.display = 'block';
     coinSVG.style.display = 'none';
@@ -293,7 +334,6 @@ function updateHUD() {
     coinSVG.style.display = 'block';
   }
 
-  // Update coin count and lives
   coinCountEl.textContent = coinCount;
   livesBox.innerHTML = '';
   for (let i = 0; i < lives; i++) {
@@ -330,8 +370,18 @@ function collided(e) {
 }
 
 // Controls
-function moveLeft() { if (!running) return; player.lane = Math.max(0, player.lane - 1); player.targetX = laneCenters[player.lane]; }
-function moveRight() { if (!running) return; player.lane = Math.min(2, player.lane + 1); player.targetX = laneCenters[player.lane]; }
+function moveLeft(){
+  if(!running) return;
+  player.lane = Math.max(0, player.lane-1);
+  player.targetX = laneCenters[player.lane];
+  recordMove();
+}
+function moveRight(){
+  if(!running) return;
+  player.lane = Math.min(2, player.lane+1);
+  player.targetX = laneCenters[player.lane];
+  recordMove();
+}
 
 window.addEventListener('keydown', (e) => {
   if (paused) return;
@@ -376,24 +426,106 @@ function update(dt) {
   }
 }
 
-// End game
-function endGame() {
+// --- FUNNY GAME OVER MESSAGES ---
+const badMsgs = [
+  "Bro… even my grandma scores higher.",
+  "That was embarrassing. Try again before anyone sees this.",
+  "You call that a run?",
+  "The Mon gods are disappointed.",
+  "You’re playing like your phone’s on 1%.",
+  "I’ve seen bots do better.",
+  "Congrats! You just set a new low score record.",
+  "Bro blinked once and lost everything",
+  "Imagine losing this early. Couldn’t be me.",
+  "Even Chog is disappointed in you."
+];
+
+const goodMsgs = [
+  "Okay okay… you’re kinda cooking",
+  "Alright grinder, I see you",
+  "Not bad. Still broke tho.",
+  "You’re touching greatness… barely.",
+  "Keep that up and Benja will notice you.",
+  "You’re not him, but you’re getting there.",
+  "W run. Almost made the leaderboard (in your dreams).",
+  "Okay, don’t stop now mf, 1M MON or nothing!",
+  "The streets are talking… you might actually have skill.",
+  "Maybe you’re not trash after all"
+];
+
+// End game (clean, single implementation)
+let endGame; // declare so we can assign
+endGame = function () {
+  // stop the run
   running = false;
   gameOver = true;
+
+  // stop bgm if playing
   if (currentBgm) {
-  currentBgm.pause();
-  currentBgm.currentTime = 0;
-}
+    try { currentBgm.pause(); currentBgm.currentTime = 0; currentBgm.onended = null; } catch(e){}
+  }
+
+  // play gameover sound
   tryPlay(audio.gameover);
+
+  // update final score
   goCoins.textContent = coinCount;
+
+  // clear any previous image/message
   goImageWrap.innerHTML = '';
-  goTitle.textContent = 'Game Over';
+  goMessage.textContent = '';
+
+  // show the overlay
+  goTitle.textContent = "Game Over";
   gameOverOverlay.style.display = 'flex';
 
-  // Randomized messages here; Part 3 replaces placeholders below
-  goMessage.textContent = coinCount >= 250 ? 'You did great!' : 'Better luck next time!';
-}
-// --- MAIN LOOP ---
+  // choose message list and pick random
+  const msgs = (typeof coinCount === 'number' && coinCount >= 250) ? goodMsgs : badMsgs;
+  const chosen = msgs[Math.floor(Math.random() * msgs.length)];
+
+  // apply message styling + text
+  goMessage.textContent = chosen;
+  goMessage.style.fontWeight = '700';
+  goMessage.style.fontSize = '18px';
+  goMessage.style.color = '#072033';
+  goMessage.style.margin = '10px 0 12px 0';
+
+  // append corresponding image (good / bad)
+  const img = new Image();
+  img.src = (typeof coinCount === 'number' && coinCount >= 250) ? 'assets/gameover_good.webp' : 'assets/gameover_bad.webp';
+  img.style.maxWidth = '60%';
+  img.style.borderRadius = '12px';
+  img.style.marginTop = '10px';
+  // NEW: limit height so buttons remain visible
+  img.style.maxHeight = '36vh';
+  img.style.objectFit = 'contain';
+  img.onload = () => { /* nothing extra needed, it will display */ };
+  img.onerror = () => { /* silently fail if image missing */ };
+  goImageWrap.appendChild(img);
+
+  // show submit UI inside the Game Over panel (only if not submitted this run)
+  try {
+    const wrap = document.getElementById('submitWrap');
+    if (wrap) {
+      if (!submittedThisRun) {
+        wrap.style.display = 'block';
+        wrap.style.zIndex = '999999';
+        // focus the name field for convenience
+        try { document.getElementById('leaderName').focus(); } catch(e){}
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+  } catch(e){}
+
+  // ensure Play Again / Back buttons are visible (in case of small screens)
+  try {
+    document.getElementById('retryButton').style.display = 'inline-block';
+    document.getElementById('toStartButton').style.display = 'inline-block';
+  } catch(e){}
+};
+
+// MAIN LOOP
 let rafId = null;
 function loop(now) {
   const dt = now - lastTime;
@@ -438,7 +570,7 @@ function draw() {
   ctx.restore();
 }
 
-// --- Start, Restart, Back ---
+// Start, Restart, Back
 function startGame() {
   entities = [];
   coinCount = 0;
@@ -471,32 +603,26 @@ function toStart() {
   running = false;
   gameOver = false;
   paused = false;
+  loadLeaderboard();
   if (currentBgm) {
-  currentBgm.pause();
-  currentBgm.currentTime = 0;
+    currentBgm.pause();
+    currentBgm.currentTime = 0;
+  }
+  // reset submit UI for next run
+  resetSubmitStateForNewRun();
 }
 
-}
-
-// --- Initialize ---
+// Initialize
 resize();
 player.x = laneCenters[player.lane];
 updateHUD();
 
-// --- PAUSE & MUTE CONTROLS ---
+// Pause & mute controls (created programmatically)
 const muteBtn = document.createElement('button');
 muteBtn.textContent = '🔇';
 Object.assign(muteBtn.style, {
-  position: 'absolute',
-  top: '10px',
-  right: '10px',
-  zIndex: '10',
-  fontSize: '20px',
-  background: 'rgba(0,0,0,0.4)',
-  color: 'white',
-  border: 'none',
-  cursor: 'pointer',
-  borderRadius: '8px'
+  position: 'absolute', top: '10px', right: '10px', zIndex: '10', fontSize: '20px',
+  background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px'
 });
 document.body.appendChild(muteBtn);
 muteBtn.style.display = 'none';
@@ -504,34 +630,17 @@ muteBtn.style.display = 'none';
 const pauseBtn = document.createElement('button');
 pauseBtn.textContent = '⏸️';
 Object.assign(pauseBtn.style, {
-  position: 'absolute',
-  top: '10px',
-  right: '60px',
-  zIndex: '10',
-  fontSize: '20px',
-  background: 'rgba(0,0,0,0.4)',
-  color: 'white',
-  border: 'none',
-  cursor: 'pointer',
-  borderRadius: '8px',
+  position: 'absolute', top: '10px', right: '60px', zIndex: '10', fontSize: '20px',
+  background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px',
   display: 'none'
 });
 document.body.appendChild(pauseBtn);
 
 const pauseMenu = document.createElement('div');
 Object.assign(pauseMenu.style, {
-  position: 'absolute',
-  top: '0',
-  left: '0',
-  width: '100%',
-  height: '100%',
-  background: 'rgba(0,0,0,0.6)',
-  display: 'none',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  color: 'white',
-  zIndex: '20'
+  position: 'absolute', top: '0', left: '0', width: '100%', height: '100%',
+  background: 'rgba(0,0,0,0.6)', display: 'none', flexDirection: 'column',
+  justifyContent: 'center', alignItems: 'center', color: 'white', zIndex: '70'
 });
 pauseMenu.innerHTML = `
   <h2>Paused</h2>
@@ -540,40 +649,20 @@ pauseMenu.innerHTML = `
 `;
 document.body.appendChild(pauseMenu);
 
-// --- MUTE BUTTON (improved) ---
+// Mute logic
 muteBtn.onclick = () => {
   muted = !muted;
-  // update icon
   muteBtn.textContent = muted ? '🔈' : '🔇';
-
-  // apply mute flag to all audio elements
-  document.querySelectorAll('audio').forEach(a => {
-    try { a.muted = muted; } catch(e){}
-  });
-
+  document.querySelectorAll('audio').forEach(a => { try { a.muted = muted; } catch(e){} });
   if (muted) {
-    // when muting, pause the current bgm if playing
-    if (currentBgm && !currentBgm.paused) {
-      try { currentBgm.pause(); } catch(e){}
-    }
+    if (currentBgm && !currentBgm.paused) { try { currentBgm.pause(); } catch(e){} }
   } else {
-    // unmuting: if there is a currentBgm, resume it when appropriate
-    if (currentBgm) {
-      // if the game is running and not paused, resume bgm
-      if (running && !paused) {
-        try { currentBgm.play().catch(() => {}); } catch(e){}
-      }
-      // otherwise leave it paused until the game starts/resumes
-    } else {
-      // If no currentBgm selected but game is running, start shuffle
-      if (running && !paused) {
-        try { playRandomBgm(); } catch(e){}
-      }
-    }
+    if (currentBgm && running && !paused) { try { currentBgm.play().catch(()=>{}); } catch(e){} }
+    else if (running && !currentBgm) { try { playRandomBgm(); } catch(e){} }
   }
 };
 
-// --- PAUSE BUTTON ---
+// Pause / resume / back-to-start
 pauseBtn.onclick = () => {
   if (!paused) {
     paused = true;
@@ -581,107 +670,158 @@ pauseBtn.onclick = () => {
     if (currentBgm) currentBgm.pause();
   }
 };
-
-// --- RESUME BUTTON ---
 pauseMenu.querySelector('#resumeBtn').onclick = () => {
   paused = false;
   pauseMenu.style.display = 'none';
   if (currentBgm) currentBgm.play().catch(() => {});
 };
-
-// --- BACK TO START BUTTON ---
 pauseMenu.querySelector('#backToStartBtn').onclick = () => {
   paused = false;
   pauseMenu.style.display = 'none';
-
-  // Pause bgm
-  if (currentBgm) {
-    try { currentBgm.pause(); } catch(e){}
-  }
-
-  // Hide the controls so they are not interactive on the Start overlay
+  if (currentBgm) { try { currentBgm.pause(); } catch(e){} }
   try { muteBtn.style.display = 'none'; } catch(e){}
   try { pauseBtn.style.display = 'none'; } catch(e){}
-
-  // Now go to start screen
   toStart();
 };
 
-// --- Show Pause when game starts ---
+// Show Pause when game starts - single reliable binding
 startButton.addEventListener('click', () => {
-  muteBtn.style.display = 'block';
-  pauseBtn.style.display = 'block';
+  try { pauseBtn.style.display = 'block'; } catch(e){}
+  try { muteBtn.style.display = 'block'; } catch(e){}
+  beginRecording();
   startGame();
 });
 
-retryButton.addEventListener('click', () => { pauseBtn.style.display = 'block'; restart(); });
-toStartButton.addEventListener('click', () => {
-  muteBtn.style.display = 'none';
-  pauseBtn.style.display = 'none';
-  toStart();
-});
+// retry / toStart
+retryButton.addEventListener('click', () => { try { pauseBtn.style.display = 'block'; } catch(e){} try { muteBtn.style.display = 'block'; } catch(e){} beginRecording(); restart(); });
+toStartButton.addEventListener('click', () => { muteBtn.style.display = 'none'; pauseBtn.style.display = 'none'; toStart(); });
 
+// ---------- Leaderboard client logic ----------
+const API_BASE = 'https://chog-leaderboard-server.onrender.com'; // <-- set your server URL here
 
-// --- FUNNY GAME OVER MESSAGES ---
-const badMsgs = [
-  "Bro… even my grandma scores higher.",
-  "That was embarrassing. Try again before anyone sees this.",
-  "You call that a run?",
-  "The Mon gods are disappointed.",
-  "You’re playing like your phone’s on 1%.",
-  "I’ve seen bots do better.",
-  "Congrats! You just set a new low score record.",
-  "Bro blinked once and lost everything",
-  "Imagine losing this early. Couldn’t be me.",
-  "Even Chog is disappointed in you."
-];
+// recording state
+let eventLog = [];
+let runStartTs = 0;
+let sessionRecording = false;
 
-const goodMsgs = [
-  "Okay okay… you’re kinda cooking",
-  "Alright grinder, I see you",
-  "Not bad. Still broke tho.",
-  "You’re touching greatness… barely.",
-  "Keep that up and Benja will notice you.",
-  "You’re not him, but you’re getting there.",
-  "W run. Almost made the leaderboard (in your dreams).",
-  "Okay, don’t stop now mf, 1M MON or nothing!",
-  "The streets are talking… you might actually have skill.",
-  "Maybe you’re not trash after all"
-];
-
-// --- Enhanced Game Over with images + messages ---
-const originalEndGame = endGame;
-endGame = function() {
-  running = false;
-  gameOver = true;
-  if (currentBgm) {
-  currentBgm.pause();
-  currentBgm.currentTime = 0;
+function beginRecording() {
+  eventLog = [];
+  runStartTs = performance.now();
+  sessionRecording = true;
+  resetSubmitStateForNewRun();
 }
-  tryPlay(audio.gameover);
+function stopRecording(){ sessionRecording = false; }
+function recordMove(){
+  try {
+    if (!sessionRecording) return;
+    eventLog.push({ t: Math.round(performance.now() - runStartTs), type: 'move', lane: player.lane });
+  } catch(e){ }
+}
 
-  goCoins.textContent = coinCount;
-  goImageWrap.innerHTML = '';
-  goTitle.textContent = 'Game Over';
-  gameOverOverlay.style.display = 'flex';
+// submit state helpers
+function resetSubmitStateForNewRun() {
+  submittedThisRun = false;
+  submitInProgress = false;
+  const btn = document.getElementById('submitScoreBtn');
+  const msg = document.getElementById('submitMsg');
+  const wrap = document.getElementById('submitWrap');
+  if (btn) { btn.disabled = false; btn.textContent = "Submit"; }
+  if (msg) { msg.style.display = "none"; msg.textContent = ""; }
+  if (wrap) { wrap.style.display = "none"; }
+}
 
-  // Choose random message set
-  const msgs = coinCount >= 250 ? goodMsgs : badMsgs;
-  goMessage.textContent = msgs[Math.floor(Math.random() * msgs.length)];
-goMessage.style.fontWeight = '700';
-goMessage.style.fontSize = '18px';
-goMessage.style.color = '#072033';
-goMessage.style.margin = '10px 0 12px 0';
+// submit function (POST)
+async function submitRunToServer() {
+  if (submittedThisRun || submitInProgress) return;
+  const nameEl = document.getElementById('leaderName');
+  const msgEl = document.getElementById('submitMsg');
+  if (!nameEl) return alert('Name input missing');
+  const name = nameEl.value.trim();
+  msgEl.style.display = 'block'; msgEl.textContent = 'Validating...';
+  if (!name || name.length < 2) { msgEl.textContent = 'Name too short'; return; }
+  if (name.length > 20) { msgEl.textContent = 'Name too long'; return; }
 
-  // Show corresponding image
-  const img = new Image();
-  img.src = coinCount >= 250 ? 'assets/gameover_good.webp' : 'assets/gameover_bad.webp';
-  img.style.maxWidth = '60%';
-  img.style.borderRadius = '12px';
-  img.style.marginTop = '10px';
-  goImageWrap.appendChild(img);
+  const payload = {
+    name: name,
+    claimedScore: typeof coinCount !== 'undefined' ? coinCount : 0,
+    runMs: Math.round(typeof elapsed !== 'undefined' ? elapsed : (performance.now() - runStartTs)),
+    events: eventLog
+  };
+
+  msgEl.textContent = 'Submitting...';
+  submitInProgress = true;
+  const btn = document.getElementById('submitScoreBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  try {
+    const res = await fetch(API_BASE + '/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const j = await res.json();
+    if (res.ok && j.ok) {
+      msgEl.textContent = 'Submitted ✅';
+      submittedThisRun = true;
+      if (btn) { btn.disabled = true; btn.textContent = 'Submitted'; }
+      loadLeaderboard();
+    } else {
+      msgEl.textContent = j.error || j.reason || 'Rejected';
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
+    }
+  } catch (err) {
+    console.error(err);
+    msgEl.textContent = 'Network error';
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
+  } finally {
+    submitInProgress = false;
+  }
+}
+
+// load leaderboard
+async function loadLeaderboard(limit = 8) {
+  const box = document.getElementById('leaderboardRows');
+  if (!box) return;
+  box.innerHTML = 'Loading...';
+  try {
+    const r = await fetch(API_BASE + '/api/leaderboard?limit=' + limit);
+    const j = await r.json();
+    const rows = j.rows || j;
+    if (!rows || rows.length === 0) { box.innerHTML = '<div style="opacity:.7">No scores yet</div>'; return; }
+    box.innerHTML = rows.map((row,i)=>`<div style="margin-bottom:6px;"><strong>${i+1}.</strong> ${escapeHtml(row.name||row.username||row.name)} <span style="float:right;">${row.score}</span></div>`).join('');
+  } catch(e){
+    console.error(e);
+    box.innerHTML = 'Failed to load';
+  }
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// wire submit button
+const submitBtn = document.getElementById('submitScoreBtn');
+if (submitBtn) submitBtn.addEventListener('click', submitRunToServer);
+const sw = document.getElementById('submitWrap');
+if (sw) sw.style.display = 'none';
+
+// wrap toStart to refresh leaderboard and hide submit UI
+const _origToStart = typeof toStart === 'function' ? toStart : null;
+toStart = function(){
+  if (_origToStart) _origToStart();
+  const sw2 = document.getElementById('submitWrap'); if (sw2) sw2.style.display = 'none';
+  loadLeaderboard();
 };
 
+// End game wrapper to stop recording & show submit
+if (typeof endGame === 'function') {
+  const _eg = endGame;
+  endGame = function(){
+    stopRecording();
+    _eg();
+    const sw3 = document.getElementById('submitWrap'); if (sw3 && !submittedThisRun) sw3.style.display = 'block';
+    try { document.getElementById('leaderName').focus(); } catch(e){}
+  }
+}
+
+// initial load of leaderboard
+try { loadLeaderboard(); } catch(e){}
 
 // Debug Access
 window.ChogRush = { startGame, restart, toStart, getState: () => ({ coinCount, lives, entities, elapsed }) };
