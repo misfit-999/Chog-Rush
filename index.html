@@ -4,74 +4,33 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Chog Rush</title>
-<!-- Social Preview Meta Tags -->
-<meta property="og:title" content="Chog Rush 🎮" />
-<meta property="og:description" content="Collect MON, dodge obstacles, and chase glory in Chog Rush — made by mi$fit." />
-<meta property="og:image" content="https://chogrush.xyz/assets/preview_v2.jpg" />
-<meta property="og:url" content="https://chogrush.xyz" />
-<meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Chog Rush 🎮" />
-<meta name="twitter:description" content="Collect MON, dodge obstacles, and chase glory in Chog Rush — made by mi$fit." />
-<meta name="twitter:image" content="https://chogrush.xyz/assets/preview_v2.jpg" />
 <style>
   :root{--bg:#bcbcbc;--text:#072033}
   html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent}
   canvas{display:block;width:100vw;height:100vh;background:var(--bg);touch-action:none}
   .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-  .panel{pointer-events:auto;background:rgba(255,255,255,0.97);border-radius:12px;padding:18px;max-width:760px;width:88%;box-shadow:0 8px 30px rgba(0,0,0,0.18);text-align:center}
+  .panel{pointer-events:auto;background:rgba(255,255,255,0.98);border-radius:12px;padding:18px;max-width:760px;width:88%;box-shadow:0 8px 30px rgba(0,0,0,0.18);text-align:center}
+  .panel.no-scroll{max-height:calc(100vh - 48px);overflow:hidden}
   h1{margin:0 0 8px 0;font-size:34px}
   p.small{margin:6px 0;color:#334;font-size:14px}
   button{cursor:pointer;border:none;background:#072033;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700}
-  .controls{display:flex;gap:8px;justify-content:center;margin-top:10px}
-  .hud{position:fixed;left:14px;top:14px;display:flex;gap:10px;align-items:center}
+  .controls{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+  .hud{position:fixed;left:14px;top:14px;display:flex;gap:10px;align-items:center;z-index:60}
   .coinBox{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.95);padding:8px 10px;border-radius:10px;font-weight:800;color:var(--text)}
   .livesBox{display:flex;gap:6px;align-items:center;padding:6px;background:rgba(255,255,255,0.95);border-radius:10px}
-  .controlsBottom{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
-  .touchBtn{background:rgba(7,32,51,0.9);color:#fff;padding:10px 14px;border-radius:10px;font-weight:800;user-select:none;pointer-events:auto}
-  .muted{opacity:0.7;font-size:13px;margin-top:8px}
+  .controlsBottom{position:fixed;bottom:14px;left:0;right:0;display:flex;justify-content:space-between;gap:8px;padding:0 12px;z-index:50;pointer-events:auto}
+  .touchBtn{background:rgba(7,32,51,0.9);color:#fff;padding:10px 14px;border-radius:10px;font-weight:800;user-select:none;pointer-events:auto;min-width:48px;text-align:center}
   .start-bg{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-  .start-bg img{max-width:70%;height:auto;display:block;margin:0 auto 18px auto}
+  .start-bg img{max-width:70%;height:auto;display:block;margin:0 auto 12px auto}
   .icon-row{display:flex;justify-content:center;gap:20px;margin-bottom:12px}
   .icon-row img{width:40px;height:40px}
-  @media(max-width:420px){ h1{font-size:28px} .start-bg img{max-width:90%;}}
-
-  /* ensure overlays are clickable when visible */
-  #startOverlay, #gameOverOverlay { pointer-events: auto; }
-
-  /* NEW: limit gameover image size so buttons stay visible */
-  #goImageWrap img {
-    display:block;
-    margin: 10px auto 8px auto;
-    max-width: 60%;
-    max-height: 36vh;     /* <-- ensures image never grows too tall */
-    width: auto;
-    height: auto;
-    border-radius: 12px;
-    object-fit: contain;
-  }
-
-  /* NEW: position touch controls at screen edges */
-  #touchLeft {
-    position: fixed;
-    left: 14px;
-    bottom: 14px;
-    transform: none;
-    z-index: 50;
-  }
-  #touchRight {
-    position: fixed;
-    right: 14px;
-    bottom: 14px;
-    transform: none;
-    z-index: 50;
-  }
-
-  /* ensure submit UI sits above overlay content */
-  #submitWrap { z-index: 9999; position: relative; }
-
-  /* make sure gameOver panel content can scroll on very short screens */
-  #gameOverOverlay .panel { max-height: 85vh; overflow-y: auto; }
+  .leaderboard-box{position:fixed;right:14px;top:14px;background:rgba(255,255,255,0.95);padding:8px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.12);z-index:70;pointer-events:auto;max-width:320px}
+  .leaderboard-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .leaderboard-list{margin-top:8px;text-align:left;max-height:300px;overflow:auto;font-size:13px}
+  .game-over-img { max-width: 60%; max-height: 34vh; object-fit:contain; border-radius:12px; display:block; margin:8px auto; }
+  .submit-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:8px}
+  .small-note{font-size:12px;color:#666;margin-top:6px}
+  @media(max-width:420px){ h1{font-size:28px} .start-bg img{max-width:90%} .game-over-img{max-height:20vh} .leaderboard-box{max-width:220px} .leaderboard-list{max-height:200px}}
 </style>
 </head>
 <body>
@@ -87,84 +46,73 @@
   <div class="livesBox" id="livesBox" style="margin-left:10px"></div>
 </div>
 
-<!-- Start Screen -->
-<div id="startOverlay" class="overlay" style="display:flex;z-index:10">
-  <!-- leaderboard box (inside start overlay, top-right) -->
-  <div id="leaderboardBox" style="position:absolute; right:14px; top:14px; width:220px; background:rgba(255,255,255,0.95); padding:8px; border-radius:10px; text-align:left; font-size:13px; z-index:60;">
-    <strong style="display:block;margin-bottom:6px;">Leaderboard</strong>
-    <div id="leaderboardRows">Loading…</div>
-    <div style="font-size:12px; opacity:0.8; margin-top:8px;">Submit to appear</div>
+<!-- Leaderboard box (start page only). Collapsed default -->
+<div id="leaderboardBox" class="leaderboard-box" aria-hidden="false">
+  <div class="leaderboard-header">
+    <strong style="font-size:15px">Leaderboard</strong>
+    <button id="leaderToggle" style="background:#eee;color:#072033;padding:6px 8px;border-radius:8px">Show</button>
   </div>
+  <div id="leaderContent" style="display:none">
+    <div class="leaderboard-list" id="leaderList">Loading...</div>
+    <div class="small-note">Click refresh to sync with server</div>
+    <div style="margin-top:8px;display:flex;justify-content:flex-end">
+      <button id="leaderRefresh" style="background:#072033">Refresh</button>
+    </div>
+  </div>
+</div>
 
-  <div class="panel start-bg" role="dialog" aria-modal="true" style="padding:14px;">
-    <img src="assets/start_bg.webp" alt="Chog Rush Start Image" id="startImage" style="max-width:65%; margin-bottom:10px;">
-    <div class="icon-row" style="margin-bottom:8px;">
-      <img src="assets/coin.webp" alt="MON Icon">
+<!-- Start overlay: no-scroll to prevent scrolling of start panel -->
+<div id="startOverlay" class="overlay" style="display:flex;z-index:40;pointer-events:auto">
+  <div class="panel start-bg no-scroll" role="dialog" aria-modal="true">
+    <img src="assets/start_bg.webp" alt="Chog Rush Start Image" id="startImage">
+    <div class="icon-row">
+      <img src="assets/coin.webp" alt="Coin Icon">
       <img src="assets/life.webp" alt="Health Icon">
     </div>
-
-    <p class="small" style="margin:4px 0 6px 0; text-align:left; font-size:14px;"><strong>How to play</strong>: use ← → or A / D to move lanes. On mobile, tap left/right or swipe.</p>
-
-    <div class="guide" style="max-width:92%; text-align:left; margin:0 auto 8px auto;">
-      <ul style="margin:0; padding-left:18px; color:#334; font-size:13px; line-height:1.25;">
-        <li><strong>MON</strong> = your score (collect as many as you can).</li>
-        <li><strong>Chogs Chest</strong> = rare 5× MON boost.</li>
-        <li>Avoid obstacles, each hit costs a life.</li>
-      </ul>
-    </div>
-
-    <p class="small" style="margin:0 0 8px 0; font-size:13px; opacity:0.9; text-align:center;">
-      Created by <strong>mi$fit</strong>
-    </p>
-
-    <div class="controls" style="margin-top:4px; margin-bottom:6px;">
+    <p class="small">How to play: use ← → or A / D to move between lanes. On mobile, tap the left or right edge or swipe.</p>
+    <p class="small">Collect MON and open Chogs Chest. Avoid obstacles. You have 3 lives.</p>
+    <div class="controls">
       <button id="startButton">Start Game</button>
     </div>
+    <p class="small" style="margin-top:10px"><strong>Creator: mi$fit</strong></p>
   </div>
 </div>
 
-<!-- Game Over -->
-<div id="gameOverOverlay" class="overlay" style="display:none;z-index:60;pointer-events:auto;">
-  <div class="panel" role="dialog" aria-modal="true" style="position:relative;overflow:visible;">
+<!-- Game over overlay (contains submit to leaderboard) -->
+<div id="gameOverOverlay" class="overlay" style="display:none;z-index:90;pointer-events:auto">
+  <div class="panel" role="dialog" aria-modal="true" style="max-width:720px">
     <h1 id="goTitle">Game Over</h1>
+    <div id="goImageWrap"><img id="goImg" class="game-over-img" src="" alt="" style="display:none"></div>
+    <p id="goMessage" class="small" style="font-weight:700;font-size:18px;margin:8px 0 6px 0;color:#072033"></p>
+    <p id="goMonText" class="small" style="margin:4px 0 12px 0;">MON collected: <strong id="goCoins">0</strong></p>
 
-    <div id="goImageWrap" style="margin:8px 0"></div>
-
-    <p id="goMessage" class="small" style="font-weight:700;font-size:18px;color:#072033;margin:8px 0 6px 0;"></p>
-
-    <p id="goMonText" class="small" style="margin:0 0 12px 0;font-weight:700;">
-      MON collected: <strong id="goCoins">0</strong>
-    </p>
-
-    <!-- single submit UI inside panel (no duplicates) -->
-    <div id="submitWrap" style="display:none; position:relative; z-index:9999; margin-bottom:10px;">
-      <input id="leaderName" placeholder="Enter a name (2-20 chars)" maxlength="20"
-             style="padding:8px;border-radius:8px;border:1px solid #ddd;width:58%;box-sizing:border-box;" />
-      <button id="submitScoreBtn" style="margin-left:8px;background:#072033;color:#fff;padding:8px 10px;border-radius:8px;border:none;">
-        Submit
-      </button>
-      <div id="submitMsg" style="font-size:13px;color:#333;margin-top:8px;display:inline-block;"></div>
+    <!-- Submit to leaderboard (visible within game over overlay) -->
+    <div id="submitRow" class="submit-row">
+      <input id="submitName" placeholder="Enter username" maxlength="20" style="padding:8px;border-radius:8px;border:1px solid #ddd" />
+      <button id="submitScoreBtn">Submit Score</button>
     </div>
+    <div id="submitMsg" class="small-note" style="min-height:18px"></div>
 
-    <div class="controls" style="margin-top:0;margin-bottom:6px;display:flex;gap:8px;justify-content:center;">
-      <button id="retryButton" style="padding:10px 14px">Play Again</button>
-      <button id="toStartButton" style="background:#eee;color:#072033;padding:10px 14px">Back to Start</button>
+    <div class="controls" style="margin-top:12px">
+      <button id="retryButton">Play Again</button>
+      <button id="toStartButton" style="background:#eee;color:#072033">Back to Start</button>
     </div>
   </div>
 </div>
 
-<!-- Controls -->
-<div aria-hidden="true">
-  <div id="touchLeft" class="touchBtn" style="position:fixed;left:10px;bottom:14px;">◀</div>
-  <div id="touchRight" class="touchBtn" style="position:fixed;right:10px;bottom:14px;">▶</div>
+<!-- touch controls at left and right edges -->
+<div class="controlsBottom" aria-hidden="true">
+  <div id="touchLeft" class="touchBtn">◀</div>
+  <div id="touchRight" class="touchBtn">▶</div>
 </div>
 
-<!-- Audio -->
-<audio id="audio_bgm1" src="sound/bgm1.mp3" preload="auto"></audio>
-<audio id="audio_bgm2" src="sound/bgm2.mp3" preload="auto"></audio>
-<audio id="audio_bgm3" src="sound/bgm3.mp3" preload="auto"></audio>
-<audio id="audio_bgm4" src="sound/bgm4.mp3" preload="auto"></audio>
-<audio id="audio_bgm5" src="sound/bgm5.mp3" preload="auto"></audio>
+<!-- audio assets -->
+<audio id="audio_bgm1" src="sound/bgm1.mp3"></audio>
+<audio id="audio_bgm2" src="sound/bgm2.mp3"></audio>
+<audio id="audio_bgm3" src="sound/bgm3.mp3"></audio>
+<audio id="audio_bgm4" src="sound/bgm4.mp3"></audio>
+<audio id="audio_bgm5" src="sound/bgm5.mp3"></audio>
+
 <audio id="audio_start" src="sound/start.mp3" loop></audio>
 <audio id="audio_coin" src="sound/coin.mp3" preload="auto"></audio>
 <audio id="audio_coinx5" src="sound/coinx5.mp3" preload="auto"></audio>
@@ -174,658 +122,485 @@
 
 <script>
 (() => {
-// Canvas setup
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+  /***** CONFIG ******/
+  const LEADERBOARD_URL = 'https://chog-leaderboard-server.onrender.com'; // change if needed
+  const STORAGE_KEY = 'chog_player_name';
 
-// Game state
-let laneWidth, laneCenters;
-let paused = false;
+  /***** DOM refs ******/
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
 
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  laneWidth = canvas.width / 3;
-  laneCenters = [laneWidth * 0.5, laneWidth * 1.5, laneWidth * 2.5];
-  player.y = canvas.height - Math.min(140, canvas.height * 0.16);
-  player.w = Math.min(120, canvas.width * 0.12);
-  player.h = player.w;
-  player.x = laneCenters[player.lane];
-}
-window.addEventListener('resize', resize);
+  const coinIconImg = document.getElementById('coinIcon');
+  const coinSVG = document.getElementById('coinSVG');
+  const coinCountEl = document.getElementById('coinCount');
+  const livesBox = document.getElementById('livesBox');
 
-// Player & Entities
-const player = { lane: 1, x: 0, y: 0, w: 80, h: 80, targetX: 0, speedLerp: 0.22, bob: 0 };
-let entities = [];
-let coinCount = 0;
-let lives = 3;
-let submittedThisRun = false;
-let submitInProgress = false;
-let running = false;
-let gameOver = false;
-let speed = 3;
-const MAX_SPEED = 10;
-const BASE_SPEED = 3;
-let spawnTimer = 0;
-let spawnInterval = 900;
-let lastTime = performance.now();
-let elapsed = 0;
+  const startOverlay = document.getElementById('startOverlay');
+  const startButton = document.getElementById('startButton');
 
-// Difficulty
-const DIFFICULTY_RAMP_MS = 180000;
-const MIN_SPAWN_INTERVAL = 220;
-const BASE_OBS_CHANCE = 0.20;
-const MAX_OBS_CHANCE = 0.55;
-const BASE_COINX5_CHANCE = 0.10;
-const MIN_COINX5_CHANCE = 0.04;
-const LIFE_POWER_CHANCE = 0.05;
+  const gameOverOverlay = document.getElementById('gameOverOverlay');
+  const goTitle = document.getElementById('goTitle');
+  const goMessage = document.getElementById('goMessage');
+  const goCoins = document.getElementById('goCoins');
+  const goImg = document.getElementById('goImg');
+  const goImageWrap = document.getElementById('goImageWrap');
+  const submitName = document.getElementById('submitName');
+  const submitScoreBtn = document.getElementById('submitScoreBtn');
+  const submitMsg = document.getElementById('submitMsg');
 
-// Hitbox scale
-const hitbox = { player: 0.6, coin: 0.75, obs: 0.52 };
+  const retryButton = document.getElementById('retryButton');
+  const toStartButton = document.getElementById('toStartButton');
 
-// Assets
-const assets = {
-  player: loadImage('assets/player.webp'),
-  coin: loadImage('assets/coin.webp'),
-  coinx5: loadImage('assets/coinx5.webp'),
-  obstacle: loadImage('assets/obstacle.webp'),
-  life: loadImage('assets/life.webp'),
-  start_bg: loadImage('assets/start_bg.webp'),
-  gameover_good: loadImage('assets/gameover_good.webp'),
-  gameover_bad: loadImage('assets/gameover_bad.webp')
-};
-function loadImage(src) {
-  const im = new Image();
-  im.src = src;
-  return im;
-}
+  const touchLeft = document.getElementById('touchLeft');
+  const touchRight = document.getElementById('touchRight');
 
-// Audio
-const audio = {
-  bgms: [
-    document.getElementById('audio_bgm1'),
-    document.getElementById('audio_bgm2'),
-    document.getElementById('audio_bgm3'),
-    document.getElementById('audio_bgm4'),
-    document.getElementById('audio_bgm5')
-  ],
-  start: document.getElementById('audio_start'),
-  coin: document.getElementById('audio_coin'),
-  coinx5: document.getElementById('audio_coinx5'),
-  hit: document.getElementById('audio_hit'),
-  life: document.getElementById('audio_life'),
-  gameover: document.getElementById('audio_gameover')
-};
-let currentBgm = null;
-let currentBgmIndex = -1;
-let muted = false;
-function tryPlay(a) {
-  if (!a || muted) return;
-  try {
-    const shortFxIds = ['audio_coin', 'audio_coinx5', 'audio_hit', 'audio_life'];
-    if (a.id && shortFxIds.includes(a.id)) {
-      const clone = a.cloneNode();
-      clone.play().catch(() => {});
-      clone.addEventListener('ended', () => { try { clone.src = ''; } catch(e){} });
-    } else {
-      a.currentTime = 0;
-      a.play().catch(() => {});
-    }
-  } catch (e) { /* swallow playback errors */ }
-}
-function tryStop(a) { if (!a) return; a.pause(); a.currentTime = 0; }
+  const leaderToggle = document.getElementById('leaderToggle');
+  const leaderContent = document.getElementById('leaderContent');
+  const leaderList = document.getElementById('leaderList');
+  const leaderRefresh = document.getElementById('leaderRefresh');
+  const leaderboardBox = document.getElementById('leaderboardBox');
 
-function playRandomBgm() {
-  if (currentBgm) {
-    currentBgm.pause();
-    currentBgm.currentTime = 0;
-    currentBgm.onended = null;
-  }
-
-  const available = audio.bgms.filter(a => a && a.src && a.readyState > 0);
-  if (available.length === 0) {
-    currentBgm = null;
-    currentBgmIndex = -1;
-    return;
-  }
-
-  let newTrack;
-  do {
-    newTrack = available[Math.floor(Math.random() * available.length)];
-  } while (newTrack === currentBgm && available.length > 1);
-
-  currentBgm = newTrack;
-  currentBgmIndex = audio.bgms.indexOf(currentBgm);
-
-  if (!muted) {
-    currentBgm.play().catch(() => {});
-  }
-
-  currentBgm.onended = playRandomBgm;
-}
-
-// DOM elements
-const coinCountEl = document.getElementById('coinCount');
-const livesBox = document.getElementById('livesBox');
-const startOverlay = document.getElementById('startOverlay');
-const gameOverOverlay = document.getElementById('gameOverOverlay');
-const startButton = document.getElementById('startButton');
-const retryButton = document.getElementById('retryButton');
-const toStartButton = document.getElementById('toStartButton');
-const goTitle = document.getElementById('goTitle');
-const goMessage = document.getElementById('goMessage');
-const goCoins = document.getElementById('goCoins');
-const goImageWrap = document.getElementById('goImageWrap');
-
-// show coin icon when ready
-const coinIconImg = document.getElementById('coinIcon');
-const coinSVG = document.getElementById('coinSVG');
-assets.coin.onload = () => {
-  coinIconImg.style.display = 'block';
-  coinSVG.style.display = 'none';
-};
-
-function updateHUD() {
-  if (assets.coin && assets.coin.complete && assets.coin.naturalWidth) {
-    coinIconImg.style.display = 'block';
-    coinSVG.style.display = 'none';
-  } else {
-    coinIconImg.style.display = 'none';
-    coinSVG.style.display = 'block';
-  }
-
-  coinCountEl.textContent = coinCount;
-  livesBox.innerHTML = '';
-  for (let i = 0; i < lives; i++) {
-    const im = document.createElement('img');
-    im.src = 'assets/life.webp';
-    im.width = 28;
-    im.height = 28;
-    livesBox.appendChild(im);
-  }
-}
-
-// Spawn entities
-function spawnEntity(difficulty) {
-  const r = Math.random();
-  const obsChance = BASE_OBS_CHANCE + (MAX_OBS_CHANCE - BASE_OBS_CHANCE) * difficulty;
-  const coinx5Chance = BASE_COINX5_CHANCE - (BASE_COINX5_CHANCE - MIN_COINX5_CHANCE) * difficulty;
-  const lifeChance = LIFE_POWER_CHANCE * (1 - difficulty * 0.6);
-  let type = 'coin';
-  if (r < obsChance) type = 'obs';
-  else if (r < obsChance + coinx5Chance) type = 'coinx5';
-  else if (r < obsChance + coinx5Chance + lifeChance) type = 'life';
-  const size = (type === 'coin' ? 36 : (type === 'coinx5' ? 56 : (type === 'life' ? 44 : 64)));
-  const lane = Math.floor(Math.random() * 3);
-  entities.push({ type, lane, x: laneCenters[lane], y: -size, size });
-}
-
-// Collision helper
-function collided(e) {
-  const px = player.x, py = player.y;
-  const pr = Math.min(player.w, player.h) * 0.5 * hitbox.player;
-  const er = e.size * 0.5 * (e.type === 'coin' ? hitbox.coin : (e.type === 'obs' ? hitbox.obs : 0.7));
-  const dx = px - e.x, dy = py - e.y;
-  return Math.hypot(dx, dy) < (pr + er);
-}
-
-// Controls
-function moveLeft(){
-  if(!running) return;
-  player.lane = Math.max(0, player.lane-1);
-  player.targetX = laneCenters[player.lane];
-  recordMove();
-}
-function moveRight(){
-  if(!running) return;
-  player.lane = Math.min(2, player.lane+1);
-  player.targetX = laneCenters[player.lane];
-  recordMove();
-}
-
-window.addEventListener('keydown', (e) => {
-  if (paused) return;
-  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveLeft();
-  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveRight();
-});
-
-canvas.addEventListener('touchstart', (ev) => {
-  if (paused) return;
-  const t = ev.touches[0];
-  const rect = canvas.getBoundingClientRect();
-  const x = t.clientX - rect.left;
-  if (x < rect.width / 2) moveLeft();
-  else moveRight();
-}, { passive: true });
-
-// Update loop
-function update(dt) {
-  if (!running || paused) return;
-  player.x += (player.targetX - player.x) * player.speedLerp;
-  player.bob += dt * 0.008;
-  elapsed += dt;
-  const difficulty = Math.min(1, elapsed / DIFFICULTY_RAMP_MS);
-  spawnInterval += ((900 - (900 - MIN_SPAWN_INTERVAL) * difficulty) - spawnInterval) * 0.02;
-  spawnTimer += dt;
-  if (spawnTimer > spawnInterval) { spawnEntity(difficulty); spawnTimer = 0; }
-  speed = Math.min(MAX_SPEED, BASE_SPEED + (MAX_SPEED - BASE_SPEED) * difficulty);
-
-  for (let i = entities.length - 1; i >= 0; i--) {
-    const e = entities[i];
-    e.y += speed * (e.type === 'obs' ? 1.08 : 1.0);
-    if (collided(e)) {
-      if (e.type === 'coin') { coinCount++; tryPlay(audio.coin); }
-      else if (e.type === 'coinx5') { coinCount += 5; tryPlay(audio.coinx5); }
-      else if (e.type === 'life') { lives = Math.min(3, lives + 1); tryPlay(audio.life); }
-      else if (e.type === 'obs') { lives--; tryPlay(audio.hit); if (lives <= 0) { endGame(); return; } }
-      entities.splice(i, 1);
-      updateHUD();
-      continue;
-    }
-    if (e.y - e.size > canvas.height + 50) entities.splice(i, 1);
-  }
-}
-
-// --- FUNNY GAME OVER MESSAGES ---
-const badMsgs = [
-  "Bro… even my grandma scores higher.",
-  "That was embarrassing. Try again before anyone sees this.",
-  "You call that a run?",
-  "The Mon gods are disappointed.",
-  "You’re playing like your phone’s on 1%.",
-  "I’ve seen bots do better.",
-  "Congrats! You just set a new low score record.",
-  "Bro blinked once and lost everything",
-  "Imagine losing this early. Couldn’t be me.",
-  "Even Chog is disappointed in you."
-];
-
-const goodMsgs = [
-  "Okay okay… you’re kinda cooking",
-  "Alright grinder, I see you",
-  "Not bad. Still broke tho.",
-  "You’re touching greatness… barely.",
-  "Keep that up and Benja will notice you.",
-  "You’re not him, but you’re getting there.",
-  "W run. Almost made the leaderboard (in your dreams).",
-  "Okay, don’t stop now mf, 1M MON or nothing!",
-  "The streets are talking… you might actually have skill.",
-  "Maybe you’re not trash after all"
-];
-
-// End game (clean, single implementation)
-let endGame; // declare so we can assign
-endGame = function () {
-  // stop the run
-  running = false;
-  gameOver = true;
-
-  // stop bgm if playing
-  if (currentBgm) {
-    try { currentBgm.pause(); currentBgm.currentTime = 0; currentBgm.onended = null; } catch(e){}
-  }
-
-  // play gameover sound
-  tryPlay(audio.gameover);
-
-  // update final score
-  goCoins.textContent = coinCount;
-
-  // clear any previous image/message
-  goImageWrap.innerHTML = '';
-  goMessage.textContent = '';
-
-  // show the overlay
-  goTitle.textContent = "Game Over";
-  gameOverOverlay.style.display = 'flex';
-
-  // choose message list and pick random
-  const msgs = (typeof coinCount === 'number' && coinCount >= 250) ? goodMsgs : badMsgs;
-  const chosen = msgs[Math.floor(Math.random() * msgs.length)];
-
-  // apply message styling + text
-  goMessage.textContent = chosen;
-  goMessage.style.fontWeight = '700';
-  goMessage.style.fontSize = '18px';
-  goMessage.style.color = '#072033';
-  goMessage.style.margin = '10px 0 12px 0';
-
-  // append corresponding image (good / bad)
-  const img = new Image();
-  img.src = (typeof coinCount === 'number' && coinCount >= 250) ? 'assets/gameover_good.webp' : 'assets/gameover_bad.webp';
-  img.style.maxWidth = '60%';
-  img.style.borderRadius = '12px';
-  img.style.marginTop = '10px';
-  // NEW: limit height so buttons remain visible
-  img.style.maxHeight = '36vh';
-  img.style.objectFit = 'contain';
-  img.onload = () => { /* nothing extra needed, it will display */ };
-  img.onerror = () => { /* silently fail if image missing */ };
-  goImageWrap.appendChild(img);
-
-  // show submit UI inside the Game Over panel (only if not submitted this run)
-  try {
-    const wrap = document.getElementById('submitWrap');
-    if (wrap) {
-      if (!submittedThisRun) {
-        wrap.style.display = 'block';
-        wrap.style.zIndex = '999999';
-        // focus the name field for convenience
-        try { document.getElementById('leaderName').focus(); } catch(e){}
-      } else {
-        wrap.style.display = 'none';
-      }
-    }
-  } catch(e){}
-
-  // ensure Play Again / Back buttons are visible (in case of small screens)
-  try {
-    document.getElementById('retryButton').style.display = 'inline-block';
-    document.getElementById('toStartButton').style.display = 'inline-block';
-  } catch(e){}
-};
-
-// MAIN LOOP
-let rafId = null;
-function loop(now) {
-  const dt = now - lastTime;
-  lastTime = now;
-  if (!paused) {
-    update(dt);
-    draw();
-  }
-  rafId = requestAnimationFrame(loop);
-}
-
-// Draw everything
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-  ctx.lineWidth = 2;
-  for (let i = 1; i < 3; i++) {
-    const x = i * (canvas.width / 3);
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
-  }
-
-  // Entities
-  for (const e of entities) {
-    if (e.type === 'coin' && assets.coin.complete) ctx.drawImage(assets.coin, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
-    else if (e.type === 'coinx5' && assets.coinx5.complete) ctx.drawImage(assets.coinx5, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
-    else if (e.type === 'life' && assets.life.complete) ctx.drawImage(assets.life, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
-    else if (e.type === 'obs' && assets.obstacle.complete) ctx.drawImage(assets.obstacle, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size * 0.8);
-  }
-
-  // Player
-  const bob = Math.sin(player.bob) * 4;
-  ctx.save();
-  ctx.translate(player.x, player.y + bob);
-  if (assets.player.complete) ctx.drawImage(assets.player, -player.w / 2, -player.h / 2, player.w, player.h);
-  else {
-    ctx.fillStyle = '#3b82f6';
-    ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
-  }
-  ctx.restore();
-}
-
-// Start, Restart, Back
-function startGame() {
-  entities = [];
-  coinCount = 0;
-  lives = 3;
-  running = true;
-  gameOver = false;
-  paused = false;
-  elapsed = 0;
-  spawnInterval = 900;
-  spawnTimer = 0;
-  speed = BASE_SPEED;
-  player.lane = 1;
-  player.targetX = laneCenters[player.lane];
-  player.x = player.targetX;
-  updateHUD();
-  startOverlay.style.display = 'none';
-  gameOverOverlay.style.display = 'none';
-  tryStop(audio.start);
-  playRandomBgm();
-  lastTime = performance.now();
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = requestAnimationFrame(loop);
-}
-
-function restart() { startGame(); }
-
-function toStart() {
-  startOverlay.style.display = 'flex';
-  gameOverOverlay.style.display = 'none';
-  running = false;
-  gameOver = false;
-  paused = false;
-  loadLeaderboard();
-  if (currentBgm) {
-    currentBgm.pause();
-    currentBgm.currentTime = 0;
-  }
-  // reset submit UI for next run
-  resetSubmitStateForNewRun();
-}
-
-// Initialize
-resize();
-player.x = laneCenters[player.lane];
-updateHUD();
-
-// Pause & mute controls (created programmatically)
-const muteBtn = document.createElement('button');
-muteBtn.textContent = '🔇';
-Object.assign(muteBtn.style, {
-  position: 'absolute', top: '10px', right: '10px', zIndex: '10', fontSize: '20px',
-  background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px'
-});
-document.body.appendChild(muteBtn);
-muteBtn.style.display = 'none';
-
-const pauseBtn = document.createElement('button');
-pauseBtn.textContent = '⏸️';
-Object.assign(pauseBtn.style, {
-  position: 'absolute', top: '10px', right: '60px', zIndex: '10', fontSize: '20px',
-  background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '8px',
-  display: 'none'
-});
-document.body.appendChild(pauseBtn);
-
-const pauseMenu = document.createElement('div');
-Object.assign(pauseMenu.style, {
-  position: 'absolute', top: '0', left: '0', width: '100%', height: '100%',
-  background: 'rgba(0,0,0,0.6)', display: 'none', flexDirection: 'column',
-  justifyContent: 'center', alignItems: 'center', color: 'white', zIndex: '70'
-});
-pauseMenu.innerHTML = `
-  <h2>Paused</h2>
-  <button id="resumeBtn">Resume</button>
-  <button id="backToStartBtn">Back to Start</button>
-`;
-document.body.appendChild(pauseMenu);
-
-// Mute logic
-muteBtn.onclick = () => {
-  muted = !muted;
-  muteBtn.textContent = muted ? '🔈' : '🔇';
-  document.querySelectorAll('audio').forEach(a => { try { a.muted = muted; } catch(e){} });
-  if (muted) {
-    if (currentBgm && !currentBgm.paused) { try { currentBgm.pause(); } catch(e){} }
-  } else {
-    if (currentBgm && running && !paused) { try { currentBgm.play().catch(()=>{}); } catch(e){} }
-    else if (running && !currentBgm) { try { playRandomBgm(); } catch(e){} }
-  }
-};
-
-// Pause / resume / back-to-start
-pauseBtn.onclick = () => {
-  if (!paused) {
-    paused = true;
-    pauseMenu.style.display = 'flex';
-    if (currentBgm) currentBgm.pause();
-  }
-};
-pauseMenu.querySelector('#resumeBtn').onclick = () => {
-  paused = false;
-  pauseMenu.style.display = 'none';
-  if (currentBgm) currentBgm.play().catch(() => {});
-};
-pauseMenu.querySelector('#backToStartBtn').onclick = () => {
-  paused = false;
-  pauseMenu.style.display = 'none';
-  if (currentBgm) { try { currentBgm.pause(); } catch(e){} }
-  try { muteBtn.style.display = 'none'; } catch(e){}
-  try { pauseBtn.style.display = 'none'; } catch(e){}
-  toStart();
-};
-
-// Show Pause when game starts - single reliable binding
-startButton.addEventListener('click', () => {
-  try { pauseBtn.style.display = 'block'; } catch(e){}
-  try { muteBtn.style.display = 'block'; } catch(e){}
-  beginRecording();
-  startGame();
-});
-
-// retry / toStart
-retryButton.addEventListener('click', () => { try { pauseBtn.style.display = 'block'; } catch(e){} try { muteBtn.style.display = 'block'; } catch(e){} beginRecording(); restart(); });
-toStartButton.addEventListener('click', () => { muteBtn.style.display = 'none'; pauseBtn.style.display = 'none'; toStart(); });
-
-// ---------- Leaderboard client logic ----------
-const API_BASE = 'https://chog-leaderboard-server.onrender.com'; // <-- set your server URL here
-
-// recording state
-let eventLog = [];
-let runStartTs = 0;
-let sessionRecording = false;
-
-function beginRecording() {
-  eventLog = [];
-  runStartTs = performance.now();
-  sessionRecording = true;
-  resetSubmitStateForNewRun();
-}
-function stopRecording(){ sessionRecording = false; }
-function recordMove(){
-  try {
-    if (!sessionRecording) return;
-    eventLog.push({ t: Math.round(performance.now() - runStartTs), type: 'move', lane: player.lane });
-  } catch(e){ }
-}
-
-// submit state helpers
-function resetSubmitStateForNewRun() {
-  submittedThisRun = false;
-  submitInProgress = false;
-  const btn = document.getElementById('submitScoreBtn');
-  const msg = document.getElementById('submitMsg');
-  const wrap = document.getElementById('submitWrap');
-  if (btn) { btn.disabled = false; btn.textContent = "Submit"; }
-  if (msg) { msg.style.display = "none"; msg.textContent = ""; }
-  if (wrap) { wrap.style.display = "none"; }
-}
-
-// submit function (POST)
-async function submitRunToServer() {
-  if (submittedThisRun || submitInProgress) return;
-  const nameEl = document.getElementById('leaderName');
-  const msgEl = document.getElementById('submitMsg');
-  if (!nameEl) return alert('Name input missing');
-  const name = nameEl.value.trim();
-  msgEl.style.display = 'block'; msgEl.textContent = 'Validating...';
-  if (!name || name.length < 2) { msgEl.textContent = 'Name too short'; return; }
-  if (name.length > 20) { msgEl.textContent = 'Name too long'; return; }
-
-  const payload = {
-    name: name,
-    claimedScore: typeof coinCount !== 'undefined' ? coinCount : 0,
-    runMs: Math.round(typeof elapsed !== 'undefined' ? elapsed : (performance.now() - runStartTs)),
-    events: eventLog
+  const audio = {
+    bgms: [
+      document.getElementById('audio_bgm1'),
+      document.getElementById('audio_bgm2'),
+      document.getElementById('audio_bgm3'),
+      document.getElementById('audio_bgm4'),
+      document.getElementById('audio_bgm5')
+    ],
+    start: document.getElementById('audio_start'),
+    coin: document.getElementById('audio_coin'),
+    coinx5: document.getElementById('audio_coinx5'),
+    hit: document.getElementById('audio_hit'),
+    life: document.getElementById('audio_life'),
+    gameover: document.getElementById('audio_gameover')
   };
 
-  msgEl.textContent = 'Submitting...';
-  submitInProgress = true;
-  const btn = document.getElementById('submitScoreBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
-  try {
-    const res = await fetch(API_BASE + '/api/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const j = await res.json();
-    if (res.ok && j.ok) {
-      msgEl.textContent = 'Submitted ✅';
-      submittedThisRun = true;
-      if (btn) { btn.disabled = true; btn.textContent = 'Submitted'; }
-      loadLeaderboard();
-    } else {
-      msgEl.textContent = j.error || j.reason || 'Rejected';
-      if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
+  /***** ASSETS preload for HUD icon *****/
+  const coinAsset = new Image(); coinAsset.src = 'assets/coin.webp';
+  coinAsset.onload = ()=>{ coinIconImg.style.display='block'; coinSVG.style.display='none'; };
+
+  /***** GAME STATE ******/
+  let laneWidth, laneCenters;
+  const player = { lane:1, x:0, y:0, w:80, h:80, targetX:0, speedLerp:0.22, bob:0 };
+  let entities = [];
+  let coinCount = 0;
+  let lives = 3;
+  let running = false;
+  let gameOver = false;
+
+  // adaptive spawn/difficulty
+  let speed = 3.0;
+  const MAX_SPEED = 10.0;
+  const BASE_SPEED = 3.0;
+  const START_SPAWN_INTERVAL = 900;
+  let spawnInterval = START_SPAWN_INTERVAL;
+  let spawnTimer = 0;
+  let lastTime = performance.now();
+  let elapsed = 0;
+
+  const DIFFICULTY_RAMP_MS = 180000;
+  const MIN_SPAWN_INTERVAL = 220;
+  const BASE_OBS_CHANCE = 0.20;
+  const MAX_OBS_CHANCE = 0.55;
+  const BASE_COINX5_CHANCE = 0.10;
+  const MIN_COINX5_CHANCE = 0.04;
+  const LIFE_POWER_CHANCE = 0.05;
+  const hitbox = { player:0.6, coin:0.75, obs:0.52 };
+
+  const assets = {
+    player: loadImage('assets/player.webp'),
+    coin: loadImage('assets/coin.webp'),
+    coinx5: loadImage('assets/coinx5.webp'),
+    obstacle: loadImage('assets/obstacle.webp'),
+    life: loadImage('assets/life.webp'),
+    start_bg: loadImage('assets/start_bg.webp'),
+    gameover_good: loadImage('assets/gameover_good.webp'),
+    gameover_bad: loadImage('assets/gameover_bad.webp')
+  };
+  function loadImage(src){ const im=new Image(); im.src=src; return im; }
+
+  /***** EVENTS & RUN DATA (for plausibility) *****/
+  let events = [];
+  let runStartTime = 0;
+  let currentRunId = null;
+  let submittedForRun = false;
+
+  /***** AUDIO CONTROL ******/
+  let currentBgm = null;
+  let currentBgmIndex = -1;
+  let muted = false;
+
+  function tryPlaySound(a){
+    if(!a || muted) return;
+    try{
+      const sfxList = [audio.coin, audio.coinx5, audio.hit, audio.life];
+      if(sfxList.includes(a)){ const clone=a.cloneNode(); clone.play().catch(()=>{}); }
+      else { a.currentTime = 0; a.play().catch(()=>{}); }
+    }catch(e){}
+  }
+  function tryStopSound(a){ if(!a) return; try{ a.pause(); a.currentTime = 0; }catch(e){} }
+
+  function playRandomBgm(){
+    if(currentBgm){ currentBgm.pause(); currentBgm.currentTime=0; currentBgm.onended = null; }
+    let idx;
+    do { idx = Math.floor(Math.random()*audio.bgms.length); } while(idx === currentBgmIndex && audio.bgms.length > 1);
+    currentBgmIndex = idx; currentBgm = audio.bgms[idx];
+    if(!muted && currentBgm) currentBgm.play().catch(()=>{});
+    if(currentBgm) currentBgm.onended = playRandomBgm;
+  }
+
+  /***** RESIZE & HUD ******/
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    laneWidth = canvas.width / 3;
+    laneCenters = [laneWidth*0.5, laneWidth*1.5, laneWidth*2.5];
+    player.y = canvas.height - Math.min(140, canvas.height * 0.16);
+    player.w = Math.min(120, canvas.width * 0.12);
+    player.h = player.w;
+    player.x = laneCenters[player.lane];
+  }
+  window.addEventListener('resize', resize);
+
+  function updateHUD(){
+    if(assets.coin && assets.coin.complete && assets.coin.naturalWidth){ coinIconImg.style.display='block'; coinSVG.style.display='none'; } else { coinIconImg.style.display='none'; coinSVG.style.display='block'; }
+    coinCountEl.textContent = coinCount;
+    livesBox.innerHTML = '';
+    for(let i=0;i<lives;i++){ const im=document.createElement('img'); im.src='assets/life.webp'; im.width=28; im.height=28; livesBox.appendChild(im); }
+  }
+
+  /***** SPAWN & COLLISION ******/
+  function spawnEntity(difficulty){
+    const r = Math.random();
+    const obsChance = BASE_OBS_CHANCE + (MAX_OBS_CHANCE - BASE_OBS_CHANCE) * difficulty;
+    const coinx5Chance = BASE_COINX5_CHANCE - (BASE_COINX5_CHANCE - MIN_COINX5_CHANCE) * difficulty;
+    const lifeChance = LIFE_POWER_CHANCE * (1 - difficulty * 0.6);
+    let type = 'coin';
+    if(r < obsChance) type = 'obs';
+    else if(r < obsChance + coinx5Chance) type = 'coinx5';
+    else if(r < obsChance + coinx5Chance + lifeChance) type = 'life';
+    const size = (type === 'coin' ? 36 : (type === 'coinx5' ? 56 : (type === 'life' ? 44 : 64)));
+    const lane = Math.floor(Math.random()*3);
+    entities.push({ type, lane, x:laneCenters[lane], y:-size, size });
+  }
+
+  function collided(e){
+    const px = player.x, py = player.y;
+    const pr = Math.min(player.w, player.h) * 0.5 * hitbox.player;
+    const er = e.size * 0.5 * (e.type === 'coin' ? hitbox.coin : (e.type === 'obs' ? hitbox.obs : 0.7));
+    const dx = px - e.x, dy = py - e.y;
+    return Math.hypot(dx,dy) < (pr + er);
+  }
+
+  /***** CONTROLS & EVENTS ******/
+  function recordEvent(ev){ if(!running || runStartTime===0) return; const t = Math.max(0, Math.round(performance.now() - runStartTime)); events.push(Object.assign({t}, ev)); }
+
+  function moveLeft(){ if(!running) return; player.lane = Math.max(0, player.lane-1); player.targetX = laneCenters[player.lane]; recordEvent({type:'move',dir:'left'}); }
+  function moveRight(){ if(!running) return; player.lane = Math.min(2, player.lane+1); player.targetX = laneCenters[player.lane]; recordEvent({type:'move',dir:'right'}); }
+
+  window.addEventListener('keydown', (e) => {
+    if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveLeft();
+    if(e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveRight();
+  });
+
+  touchLeft.addEventListener('touchstart', (ev) => { ev.preventDefault(); if(!running) return; moveLeft(); }, {passive:false});
+  touchRight.addEventListener('touchstart', (ev) => { ev.preventDefault(); if(!running) return; moveRight(); }, {passive:false});
+
+  let touchStartX = null, touchStartTime = 0;
+  canvas.addEventListener('touchstart', (ev)=>{ const t = ev.touches[0]; touchStartX = t.clientX; touchStartTime = Date.now(); }, {passive:true});
+  canvas.addEventListener('touchend', (ev)=>{ if(touchStartX===null) return; const t = ev.changedTouches[0]; const dx = t.clientX - touchStartX; const dt = Date.now() - touchStartTime; if(Math.abs(dx) > 50 && dt < 700){ if(dx > 0) moveRight(); else moveLeft(); } touchStartX = null; }, {passive:true});
+
+  /***** UPDATE & RENDER ******/
+  function update(dt){
+    if(!running) return;
+    const dx = player.targetX - player.x; player.x += dx * Math.min(1, player.speedLerp * (dt/16)); player.bob += dt * 0.008;
+    elapsed += dt;
+    const difficulty = Math.min(1, elapsed / DIFFICULTY_RAMP_MS);
+    const targetSpawn = START_SPAWN_INTERVAL - (START_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * difficulty;
+    spawnInterval += (targetSpawn - spawnInterval) * 0.02;
+    spawnTimer += dt;
+    if(spawnTimer > spawnInterval){ spawnEntity(difficulty); spawnTimer = 0; }
+    speed = Math.min(MAX_SPEED, BASE_SPEED + (MAX_SPEED - BASE_SPEED) * difficulty);
+
+    for(let i = entities.length - 1; i >= 0; i--){
+      const e = entities[i];
+      e.y += speed * (e.type==='obs'?1.08:1.0) * (1 + dt/1000*0.2);
+      if(collided(e)){
+        if(e.type==='coin'){ coinCount++; tryPlaySound(audio.coin); recordEvent({type:'collect',item:'coin'}); entities.splice(i,1); updateHUD(); continue; }
+        else if(e.type==='coinx5'){ coinCount+=5; tryPlaySound(audio.coinx5); recordEvent({type:'collect',item:'coinx5'}); entities.splice(i,1); updateHUD(); continue; }
+        else if(e.type==='life'){ lives = Math.min(3, lives+1); tryPlaySound(audio.life); recordEvent({type:'collect',item:'life'}); entities.splice(i,1); updateHUD(); continue; }
+        else if(e.type==='obs'){ lives--; tryPlaySound(audio.hit); recordEvent({type:'hit'}); entities.splice(i,1); updateHUD(); if(lives <= 0){ endGame(); return; } continue; }
+      }
+      if(e.y - e.size > canvas.height + 50) entities.splice(i,1);
     }
-  } catch (err) {
-    console.error(err);
-    msgEl.textContent = 'Network error';
-    if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
-  } finally {
-    submitInProgress = false;
   }
-}
 
-// load leaderboard
-async function loadLeaderboard(limit = 8) {
-  const box = document.getElementById('leaderboardRows');
-  if (!box) return;
-  box.innerHTML = 'Loading...';
-  try {
-    const r = await fetch(API_BASE + '/api/leaderboard?limit=' + limit);
-    const j = await r.json();
-    const rows = j.rows || j;
-    if (!rows || rows.length === 0) { box.innerHTML = '<div style="opacity:.7">No scores yet</div>'; return; }
-    box.innerHTML = rows.map((row,i)=>`<div style="margin-bottom:6px;"><strong>${i+1}.</strong> ${escapeHtml(row.name||row.username||row.name)} <span style="float:right;">${row.score}</span></div>`).join('');
-  } catch(e){
-    console.error(e);
-    box.innerHTML = 'Failed to load';
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.lineWidth = 2;
+    for(let i=1;i<3;i++){ const x = i * (canvas.width/3); ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+
+    for(const e of entities){
+      if(e.type==='coin'){ if(assets.coin && assets.coin.complete) ctx.drawImage(assets.coin, e.x - e.size/2, e.y - e.size/2, e.size, e.size); else { ctx.beginPath(); ctx.fillStyle='#ffd700'; ctx.arc(e.x,e.y,e.size/2,0,Math.PI*2); ctx.fill(); } }
+      else if(e.type==='coinx5'){ if(assets.coinx5 && assets.coinx5.complete) ctx.drawImage(assets.coinx5, e.x - e.size/2, e.y - e.size/2, e.size, e.size); else { ctx.beginPath(); ctx.fillStyle='#ffb347'; ctx.arc(e.x,e.y,e.size/2,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.fillText('Chog', e.x, e.y+5); } }
+      else if(e.type==='life'){ if(assets.life && assets.life.complete) ctx.drawImage(assets.life, e.x - e.size/2, e.y - e.size/2, e.size, e.size); else { ctx.fillStyle='#e03b3b'; ctx.beginPath(); ctx.moveTo(e.x, e.y+e.size*0.3); ctx.bezierCurveTo(e.x-e.size*0.4, e.y, e.x-e.size*0.1, e.y-e.size*0.6, e.x, e.y-e.size*0.8); ctx.fill(); } }
+      else if(e.type==='obs'){ if(assets.obstacle && assets.obstacle.complete) ctx.drawImage(assets.obstacle, e.x - e.size/2, e.y - e.size/2, e.size, e.size*0.75); else { ctx.fillStyle='#e03b3b'; roundRect(ctx, e.x - e.size/2, e.y - e.size/2, e.size, e.size*0.7, 8); ctx.fill(); } }
+    }
+
+    const bob = Math.sin(player.bob) * 4;
+    ctx.save(); ctx.translate(player.x, player.y + bob);
+    if(assets.player && assets.player.complete) ctx.drawImage(assets.player, -player.w/2, -player.h/2, player.w, player.h);
+    else { ctx.fillStyle = '#3b82f6'; roundRect(ctx, -player.w/2, -player.h/2, player.w, player.h, 12); ctx.fill(); }
+    ctx.restore();
   }
-}
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
-// wire submit button
-const submitBtn = document.getElementById('submitScoreBtn');
-if (submitBtn) submitBtn.addEventListener('click', submitRunToServer);
-const sw = document.getElementById('submitWrap');
-if (sw) sw.style.display = 'none';
+  let rafId = null;
+  function loop(now){ const dt = Math.min(40, now - lastTime); lastTime = now; update(dt); draw(); rafId = requestAnimationFrame(loop); }
 
-// wrap toStart to refresh leaderboard and hide submit UI
-const _origToStart = typeof toStart === 'function' ? toStart : null;
-toStart = function(){
-  if (_origToStart) _origToStart();
-  const sw2 = document.getElementById('submitWrap'); if (sw2) sw2.style.display = 'none';
-  loadLeaderboard();
-};
-
-// End game wrapper to stop recording & show submit
-if (typeof endGame === 'function') {
-  const _eg = endGame;
-  endGame = function(){
-    stopRecording();
-    _eg();
-    const sw3 = document.getElementById('submitWrap'); if (sw3 && !submittedThisRun) sw3.style.display = 'block';
-    try { document.getElementById('leaderName').focus(); } catch(e){}
+  /***** START / RESTART / TO START / END *****/
+  function startGame(){
+    entities = []; coinCount = 0; lives = 3; running = true; gameOver = false; elapsed = 0; spawnInterval = START_SPAWN_INTERVAL; spawnTimer = 0; speed = BASE_SPEED;
+    player.lane = 1; player.targetX = laneCenters[player.lane]; player.x = player.targetX;
+    updateHUD();
+    events = []; runStartTime = performance.now(); currentRunId = `${Date.now()}-${Math.random().toString(36).slice(2,9)}`; submittedForRun = false;
+    // reset submit controls for this run
+    submitScoreBtn.disabled = false;
+    submitMsg.textContent = '';
+    // preserve stored name if present
+    submitName.value = localStorage.getItem(STORAGE_KEY) || '';
+    startOverlay.style.display = 'none'; gameOverOverlay.style.display = 'none';
+    leaderboardBox.style.display = 'none';
+    tryStopSound(audio.start);
+    playRandomBgm();
+    addInGameControls();
+    lastTime = performance.now();
+    if(rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(loop);
   }
-}
 
-// initial load of leaderboard
-try { loadLeaderboard(); } catch(e){}
+  function restart(){ startGame(); }
 
-// Debug Access
-window.ChogRush = { startGame, restart, toStart, getState: () => ({ coinCount, lives, entities, elapsed }) };
+  function toStart(){
+    running = false; gameOver = false;
+    // ensure gameOver overlay is hidden
+    gameOverOverlay.style.display = 'none';
+    if(currentBgm){ currentBgm.pause(); currentBgm.currentTime = 0; currentBgm.onended = null; currentBgm = null; currentBgmIndex = -1; }
+    tryStopSound(audio.gameover);
+    startOverlay.style.display = 'flex';
+    leaderboardBox.style.display = 'block';
+    removeInGameControls();
+    // preserve stored name if present
+    submitScoreBtn.disabled = false;
+    submitMsg.textContent = '';
+    submitName.value = localStorage.getItem(STORAGE_KEY) || '';
+    tryPlaySound(audio.start);
+  }
 
+  function endGame(){
+    running = false;
+    gameOver = true;
+    if(currentBgm){ currentBgm.pause(); currentBgm.currentTime = 0; currentBgm.onended = null; currentBgm = null; currentBgmIndex = -1; }
+    tryPlaySound(audio.gameover);
+    goCoins.textContent = coinCount;
+    // DO NOT remove the goImg DOM node. Instead reuse it and toggle display depending on load success.
+    const good = coinCount >= 250;
+    const goodMsgs = ["Okay okay… you’re kinda cooking","Alright grinder, I see you","Not bad. Still broke tho.","You’re touching greatness… barely.","Keep that up and Benja will notice you.","You’re not him, but you’re getting there.","W run. Almost made the leaderboard (in your dreams).","Okay, don’t stop now mf, 1M MON or nothing!","The streets are talking… you might actually have skill.","Maybe you’re not trash after all"];
+    const badMsgs = ["Bro… even my grandma scores higher.","That was embarrassing. Try again before anyone sees this.","You call that a run?","The Mon gods are disappointed.","You’re playing like your phone’s on 1%.","I’ve seen bots do better.","Congrats! You just set a new low score record.","Bro blinked once and lost everything","Imagine losing this early. Couldn’t be me.","Even Chog is disappointed in you."];
+
+    goMessage.textContent = good ? goodMsgs[Math.floor(Math.random()*goodMsgs.length)] : badMsgs[Math.floor(Math.random()*badMsgs.length)];
+    goMessage.style.fontWeight = '700';
+    goMessage.style.fontSize = '18px';
+    goMessage.style.color = '#072033';
+
+    // Show the corresponding image using the existing <img id="goImg"> element
+    const selectedSrc = good ? 'assets/gameover_good.webp' : 'assets/gameover_bad.webp';
+    // hide while loading
+    goImg.style.display = 'none';
+    // set handlers before assigning src
+    goImg.onload = () => { goImg.style.display = 'block'; };
+    goImg.onerror = () => { goImg.style.display = 'none'; };
+    goImg.src = selectedSrc;
+
+    // REMOVE in-game controls so mute/pause do not show on game over
+    removeInGameControls();
+
+    gameOverOverlay.style.display = 'flex';
+    // allow this run to be submitted; reset flag to false to indicate not yet submitted
+    submittedForRun = false;
+    // make sure submit controls are enabled
+    submitMsg.textContent = '';
+    // Prefill from stored name if available
+    submitName.value = localStorage.getItem(STORAGE_KEY) || '';
+    submitScoreBtn.disabled = false;
+    leaderboardBox.style.display = 'none';
+  }
+
+  /***** IN-GAME controls (mute/pause) added only when playing *****/
+  let inGameControlsEl = null;
+  function addInGameControls(){
+    if(inGameControlsEl) return;
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '10px';
+    container.style.right = '12px';
+    container.style.zIndex = '120';
+    container.style.display = 'flex';
+    container.style.gap = '8px';
+    const muteBtn = document.createElement('button');
+    muteBtn.textContent = '🔇';
+    muteBtn.style.fontSize = '18px';
+    muteBtn.style.padding = '6px';
+    muteBtn.style.borderRadius = '8px';
+    muteBtn.onclick = ()=>{
+      muted = !muted;
+      muteBtn.textContent = muted ? '🔈' : '🔇';
+      document.querySelectorAll('audio').forEach(a => a.muted = muted);
+      if(!muted && currentBgm){ currentBgm.play().catch(()=>{}); }
+    };
+    const pauseBtn = document.createElement('button');
+    pauseBtn.textContent = '⏸️';
+    pauseBtn.style.fontSize = '18px';
+    pauseBtn.style.padding = '6px';
+    pauseBtn.style.borderRadius = '8px';
+    const pauseMenu = document.createElement('div');
+    Object.assign(pauseMenu.style, {
+      position:'fixed', top:'0', left:'0', width:'100%', height:'100%', background:'rgba(0,0,0,0.6)', display:'none', zIndex:'200',
+      alignItems:'center', justifyContent:'center', flexDirection:'column', pointerEvents:'auto'
+    });
+    pauseMenu.innerHTML = `<div style="background:#fff;padding:18px;border-radius:12px;min-width:220px;text-align:center">
+      <h2 style="margin:0 0 12px 0">Paused</h2>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="resumeBtn" style="background:#072033;color:#fff;padding:8px 12px;border-radius:8px">Resume</button>
+        <button id="pauseBackBtn" style="background:#eee;color:#072033;padding:8px 12px;border-radius:8px">Back to Start</button>
+      </div>
+    </div>`;
+    pauseMenu.style.display = 'none';
+    document.body.appendChild(pauseMenu);
+
+    let isPaused = false;
+    pauseBtn.onclick = ()=>{
+      if(!isPaused){
+        isPaused = true;
+        pauseMenu.style.display = 'flex';
+        running = false;
+        if(currentBgm) currentBgm.pause();
+      }
+    };
+
+    pauseMenu.querySelector('#resumeBtn').addEventListener('click', ()=>{
+      isPaused = false;
+      pauseMenu.style.display = 'none';
+      running = true;
+      if(currentBgm && !muted) currentBgm.play().catch(()=>{});
+      lastTime = performance.now();
+      if(rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(loop);
+    });
+
+    pauseMenu.querySelector('#pauseBackBtn').addEventListener('click', ()=>{
+      isPaused = false;
+      pauseMenu.style.display = 'none';
+      if(currentBgm){ currentBgm.pause(); currentBgm.currentTime = 0; currentBgm.onended = null; currentBgm = null; }
+      toStart();
+    });
+
+    container.appendChild(muteBtn);
+    container.appendChild(pauseBtn);
+    document.body.appendChild(container);
+    inGameControlsEl = container;
+  }
+
+  function removeInGameControls(){
+    if(!inGameControlsEl) return;
+    // remove the pauseMenu if it exists
+    document.querySelectorAll('div').forEach(d => { if(d.querySelector && d.querySelector('#resumeBtn')) d.remove(); });
+    inGameControlsEl.remove(); inGameControlsEl = null;
+    if(currentBgm){ currentBgm.pause(); currentBgm.currentTime = 0; currentBgm.onended = null; currentBgm = null; currentBgmIndex = -1; }
+  }
+
+  /***** LEADERBOARD functions (start page only) ******/
+  let cachedLeader = null;
+  async function fetchLeaderboard(){
+    leaderList.textContent = 'Loading...';
+    try{
+      const res = await fetch(`${LEADERBOARD_URL}/api/leaderboard?limit=10`);
+      if(!res.ok) throw new Error('fetch failed');
+      const data = await res.json();
+      if(data && Array.isArray(data.rows)){ cachedLeader = data.rows; localStorage.setItem('chog_leader_cache', JSON.stringify({ts:Date.now(), rows:data.rows})); renderLeaderboard(data.rows); }
+      else throw new Error('bad data');
+    }catch(err){
+      const cache = localStorage.getItem('chog_leader_cache');
+      if(cache){
+        try{ const p = JSON.parse(cache); cachedLeader = p.rows; renderLeaderboard(p.rows); leaderList.insertAdjacentHTML('beforeend','<div style="font-size:12px;color:#666">Showing cached data</div>'); }
+        catch(e){ leaderList.textContent = 'Unable to load'; }
+      } else leaderList.textContent = 'Unable to load leaderboard';
+    }
+  }
+  function renderLeaderboard(rows){
+    if(!rows || rows.length === 0){ leaderList.innerHTML = '<div style="font-size:13px;color:#666">No entries yet</div>'; return; }
+    leaderList.innerHTML = rows.map((r,i)=>`<div style="padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04)"><strong>${i+1}. ${escapeHtml(r.name)}</strong><span style="float:right">${r.score}</span><div style="font-size:11px;color:#666">${new Date(r.createdAt||Date.now()).toLocaleString()}</div></div>`).join('');
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+  leaderToggle.addEventListener('click', ()=>{
+    if(leaderContent.style.display === 'none'){ leaderContent.style.display = 'block'; leaderToggle.textContent = 'Hide'; fetchLeaderboard(); }
+    else { leaderContent.style.display = 'none'; leaderToggle.textContent = 'Show'; }
+  });
+  leaderRefresh.addEventListener('click', ()=> fetchLeaderboard());
+
+  /***** SUBMIT SCORE (game over overlay) ******/
+  submitScoreBtn.addEventListener('click', async ()=>{
+    if(submittedForRun) { submitMsg.innerHTML = '<span style="color:green">Submitted ✅</span>'; return; }
+    const name = (submitName.value || '').trim();
+    if(!name || name.length < 2){ submitMsg.textContent = 'Enter a username (2+ chars)'; return; }
+    if(!/^[A-Za-z0-9_\- ]{2,20}$/.test(name)){ submitMsg.textContent = 'Allowed: letters, numbers, space, _ and -'; return; }
+    const runMs = Math.max(0, Math.round(performance.now() - runStartTime));
+    const payload = { name: name, claimedScore: coinCount, runMs: runMs, events: events.slice(0,2000) };
+    submitScoreBtn.disabled = true;
+    submitMsg.textContent = 'Submitting...';
+    try{
+      const res = await fetch(`${LEADERBOARD_URL}/api/submit`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if(!res.ok){
+        const reason = data && data.reason ? `${data.error || 'failed'}: ${data.reason}` : (data && data.error ? data.error : 'submit failed');
+        submitMsg.textContent = `Failed: ${reason}`;
+        submitScoreBtn.disabled = false;
+      } else {
+        // STORE the player's name locally for future runs
+        try { localStorage.setItem(STORAGE_KEY, name); } catch(e){}
+        submittedForRun = true;
+        submitMsg.innerHTML = '<span style="color:green">Submitted ✅</span>';
+        submitScoreBtn.disabled = true;
+        localStorage.removeItem('chog_leader_cache');
+        fetchLeaderboard();
+      }
+    }catch(err){
+      submitMsg.textContent = 'Network error submitting';
+      submitScoreBtn.disabled = false;
+    }
+  });
+
+  /***** INIT & BUTTONS wiring ******/
+  function init(){ 
+    resize(); player.x = laneCenters[player.lane]; updateHUD(); tryStopSound(audio.start); tryPlaySound(audio.start); 
+    leaderboardBox.style.display = 'block'; leaderContent.style.display = 'none'; lastTime = performance.now(); rafId = requestAnimationFrame(loop); 
+    // Prefill username input from storage if present
+    try { const s = localStorage.getItem(STORAGE_KEY); if(s) submitName.value = s; } catch(e){}
+  }
+
+  startButton.addEventListener('click', ()=> startGame());
+  retryButton.addEventListener('click', ()=> restart());
+  toStartButton.addEventListener('click', ()=> toStart());
+
+  // prevent scrolling when start overlay is visible
+  startOverlay.addEventListener('wheel', (e)=>{ if(startOverlay.style.display !== 'none'){ e.preventDefault(); } }, {passive:false});
+  startOverlay.addEventListener('touchmove', (e)=>{ if(startOverlay.style.display !== 'none'){ e.preventDefault(); } }, {passive:false});
+
+  window.ChogRush = { startGame, restart, toStart, getState: ()=>({coinCount,lives,entities,elapsed,events,currentRunId}) };
+
+  init();
 })();
 </script>
 </body>
